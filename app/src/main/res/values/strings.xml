@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">GeoLocatr</string>
+    <string name="lat_long">Latitude / Longitude</string>
+    <string name="lat_long_display">Latitude: %1$f, Longitude: %2$f</string>
+    <string name="address">Address</string>
+    <string name="get_current_location">Get Current Location</string>
 </resources>
