@@ -5,36 +5,90 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.geolocatr.ui.LocationScreen
 import com.example.geolocatr.ui.theme.GeoLocatrTheme
+import com.example.geolocatr.util.LocationUtility
+import com.google.android.gms.location.LocationSettingsStates
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var locationUtility: LocationUtility
+    private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
+    private lateinit var locationLauncher: ActivityResultLauncher<IntentSenderRequest>
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        locationUtility = LocationUtility(this)
+
+        permissionLauncher =
+            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+                // Step 5
+                // process if permissions were granted
+                locationUtility.checkPermissionAndGetLocation(this@MainActivity, permissionLauncher)
+            }
+        locationLauncher = registerForActivityResult(
+            ActivityResultContracts.StartIntentSenderForResult()
+        ) { result ->
+            if (result.resultCode == RESULT_OK) {
+                result.data?.let { data ->
+                    val states = LocationSettingsStates.fromIntent(data)
+                    locationUtility.verifyLocationSettingsStates(states)
+                }
+            }
+        }
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val locationState = remember { mutableStateOf<Location?>(null) }
-            val addressState = remember { mutableStateOf("") }
+            val locationState = locationUtility
+                .currentLocationStateFlow
+                .collectAsStateWithLifecycle(lifecycle = this@MainActivity.lifecycle)
+            val addressState = locationUtility
+                .currentAddressStateFlow
+                .collectAsStateWithLifecycle(lifecycle = this@MainActivity.lifecycle)
+
+
+
             GeoLocatrTheme {
+                LaunchedEffect(locationState.value) {
+                    locationUtility.getAddress(locationState.value)
+                }
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     LocationScreen(modifier = Modifier.padding(innerPadding),
                         location = locationState.value,
                         locationAvailable = true,
-                        onGetLocation = {},
-                        address = addressState.value
+                        onGetLocation = {
+                            locationUtility.checkPermissionAndGetLocation(this@MainActivity, permissionLauncher)
+                        },
+                        address = addressState.value.toString()
                     )
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        locationUtility.removeLocationRequest()
+        super.onDestroy()
+    }
+
+    override fun onStart() {
+        locationUtility
+            .checkIfLocationCanBeRetrieved(this, locationLauncher)
+        super.onStart()
     }
 }
 

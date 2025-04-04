@@ -1,15 +1,19 @@
 package com.example.geolocatr.ui
 
 import android.location.Location
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.example.geolocatr.R
 
 // TODO: Step 2
@@ -20,14 +24,14 @@ fun LocationScreen(modifier: Modifier = Modifier,
                    locationAvailable: Boolean,
                    onGetLocation: () -> Unit,
                    address: String) {
-    Column {
-        // TODO: Part 1.I
-        // TODO: integrate null checks
+    Column(modifier = modifier.padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceEvenly) {
         if(location != null) {
             Text(stringResource(R.string.lat_long))
             Text(stringResource(R.string.lat_long_display, location.latitude, location.longitude))
             Text(stringResource(R.string.address))
-            Text(address)
+            Text(address.toString())
             Button(enabled = locationAvailable,
                 onClick = onGetLocation,
                 ) {
@@ -37,7 +41,7 @@ fun LocationScreen(modifier: Modifier = Modifier,
             Text(stringResource(R.string.lat_long))
             Text(stringResource(R.string.lat_long_display, 0.0, 0.0))
             Text(stringResource(R.string.address))
-            Text(address)
+            Text("No Current Address")
             Button(enabled = locationAvailable,
                 onClick = onGetLocation,
             ) {
