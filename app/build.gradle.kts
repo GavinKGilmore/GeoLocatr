@@ -2,7 +2,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.secrets.gradle)
 }
+
 
 android {
     namespace = "com.example.geolocatr"
@@ -39,6 +41,11 @@ android {
     }
 }
 
+secrets {
+    propertiesFileName = "secrets.properties"
+    defaultPropertiesFileName = "local.defaults.properties"
+}
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)
@@ -57,4 +64,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.google.play.services.location)
+    implementation(libs.google.play.services.maps)
+    implementation(libs.google.maps.compose)
 }
