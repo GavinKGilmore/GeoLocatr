@@ -21,6 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.geolocatr.ui.LocationScreen
 import com.example.geolocatr.ui.theme.GeoLocatrTheme
+import com.example.geolocatr.util.LocationAlarmReceiver
 import com.example.geolocatr.util.LocationUtility
 import com.google.android.gms.location.LocationSettingsStates
 
@@ -29,6 +30,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var locationUtility: LocationUtility
     private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var locationLauncher: ActivityResultLauncher<IntentSenderRequest>
+    private val locationAlarmReceiver = LocationAlarmReceiver()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         locationUtility = LocationUtility(this)
@@ -73,7 +75,11 @@ class MainActivity : ComponentActivity() {
                         onGetLocation = {
                             locationUtility.checkPermissionAndGetLocation(this@MainActivity, permissionLauncher)
                         },
-                        address = addressState.value.toString()
+                        address = addressState.value.toString(),
+                        onNotify = { lastLocation ->
+                            locationAlarmReceiver.lastLocation = lastLocation
+                            locationAlarmReceiver.scheduleAlarm(this@MainActivity) // TODO: implement everything here
+                        }
                     )
                 }
             }

@@ -24,11 +24,11 @@ fun UiSettings(
         modifier = modifier
             .fillMaxWidth()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         // Buildings toggle section
         Column {
-            Text("Show Buildings")
+            Text("Show Buildings:")
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -46,7 +46,6 @@ fun UiSettings(
                             onClick = { onBuildingChanged(true) }
                         )
                 )
-                Spacer(modifier = Modifier.width(16.dp))
                 RadioButton(
                     selected = !buildingEnabled,
                     onClick = { onBuildingChanged(false) }
@@ -65,7 +64,7 @@ fun UiSettings(
 
         // Map toolbar toggle section
         Column {
-            Text("Enable Zoom Controls")
+            Text("Enable Zoom Controls:")
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -83,7 +82,6 @@ fun UiSettings(
                             onClick = { onToolbarChanged(true) }
                         )
                 )
-                Spacer(modifier = Modifier.width(16.dp))
                 RadioButton(
                     selected = !toolbarEnabled,
                     onClick = { onToolbarChanged(false) }

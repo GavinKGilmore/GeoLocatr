@@ -2,9 +2,14 @@ package com.example.geolocatr.ui
 
 import android.location.Location
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,7 +47,8 @@ fun LocationScreen(modifier: Modifier = Modifier,
                    location: Location?,
                    locationAvailable: Boolean,
                    onGetLocation: () -> Unit,
-                   address: String) {
+                   address: String,
+                   onNotify: (Location) -> Unit) {
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 0f)
     }
@@ -94,27 +100,45 @@ fun LocationScreen(modifier: Modifier = Modifier,
     Column(modifier = modifier.padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceEvenly) {
+
+
         if(location != null) {
             Text(stringResource(R.string.lat_long))
             Text(stringResource(R.string.lat_long_display, location.latitude, location.longitude))
             Text(stringResource(R.string.address))
             Text(address.toString())
-            Button(enabled = locationAvailable,
-                onClick = onGetLocation,
+            Row(modifier = modifier, horizontalArrangement = Arrangement.SpaceBetween) {
+                Button(enabled = locationAvailable,
+                    onClick = onGetLocation,
                 ) {
-                Text(stringResource(R.string.get_current_location))
+                    Text(stringResource(R.string.get_current_location))
+                }
+                Button(enabled = true, onClick = { onNotify(location) }) {
+                    Text("Remind Me Later")
+                }
             }
+
         } else {
             Text(stringResource(R.string.lat_long))
             Text(stringResource(R.string.lat_long_display, 0.0, 0.0))
             Text(stringResource(R.string.address))
             Text("No Current Address")
-            Button(enabled = locationAvailable,
-                onClick = onGetLocation,
-            ) {
-                Text(stringResource(R.string.get_current_location))
+            Row(modifier = modifier, horizontalArrangement = Arrangement.SpaceBetween) {
+                Button(enabled = locationAvailable,
+                    onClick = onGetLocation,
+                ) {
+                    Text(stringResource(R.string.get_current_location))
+                }
+                Button(enabled = false, onClick = {}) {
+                    Text("Remind Me Later")
+                }
+
+
             }
+
         }
+
+
         UiSettings(
             modifier = modifier,
             buildingEnabled = buildingState.value,
@@ -164,6 +188,7 @@ private fun PreviewLocationScreen() {
             }
             addressState.value = "Singapore"
         },
-        address = addressState.value
+        address = addressState.value,
+        onNotify = {}
     )
 }
