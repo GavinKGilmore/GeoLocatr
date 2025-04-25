@@ -56,6 +56,8 @@ fun LocationScreen(modifier: Modifier = Modifier,
     val lifecycleOwner = LocalLifecycleOwner.current
     val dataStoreManager = remember { DataStoreManager(context) }
 
+    val mapReadyState = remember { mutableStateOf(false) }
+
     // collect:
     val buildingState = dataStoreManager
         .buildingFlow
@@ -79,7 +81,7 @@ fun LocationScreen(modifier: Modifier = Modifier,
         isBuildingEnabled = buildingState.value
     )
 
-    LaunchedEffect(location) {
+    LaunchedEffect(location, mapReadyState.value) {
         if(location != null) {
             // include all points that should be within the bounds of the zoom
             // convex hull
@@ -157,7 +159,8 @@ fun LocationScreen(modifier: Modifier = Modifier,
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             uiSettings = mapUiSettings,
-            properties = mapProperties
+            properties = mapProperties,
+            onMapLoaded = {mapReadyState.value = true }
         ) {
             if(location != null) {
                 val markerState = MarkerState().apply {

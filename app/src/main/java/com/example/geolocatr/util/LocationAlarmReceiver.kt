@@ -19,6 +19,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.example.geolocatr.MainActivity
 import java.util.Date
 import java.util.Locale
 
@@ -95,10 +96,10 @@ class LocationAlarmReceiver : BroadcastReceiver() {
     }
     override fun onReceive(context: Context, intent: Intent) {
         // Part 1.III
+        val lat = intent.getDoubleExtra(EXTRA_LATITUDE, 0.0)
+        val long = intent.getDoubleExtra(EXTRA_LONGITUDE, 0.0)
         Log.d(LOG_TAG, "received alarm for action ${intent.action}")
         if (intent.action == ALARM_ACTION) {
-            val lat = intent.getDoubleExtra(EXTRA_LATITUDE, 0.0)
-            val long = intent.getDoubleExtra(EXTRA_LONGITUDE, 0.0)
             Log.d(LOG_TAG, "received our intent with $lat / $long")
         }
         if (ActivityCompat
@@ -116,10 +117,22 @@ class LocationAlarmReceiver : BroadcastReceiver() {
                     description = "You are near another player!"
                 }
             notificationManager.createNotificationChannel(channel)
+
+            val startingLocation = Location("").apply {
+                Log.d(LOG_TAG, "$lat, $long")
+                latitude = lat
+                longitude = long
+            }
+
+            val deepLinkPendingIntent = MainActivity
+                .createPendingIntent(context, startingLocation)
+
             val notification = NotificationCompat.Builder(context, "1")
             .setSmallIcon(android.R.drawable.ic_dialog_map)
                 .setContentTitle("You are here!")
                 .setContentText("You are at ${intent.getDoubleExtra(EXTRA_LATITUDE, 0.0)} / ${intent.getDoubleExtra(EXTRA_LONGITUDE, 0.0)}")
+                .setContentIntent(deepLinkPendingIntent)
+                .setAutoCancel(true)
                 .build()
             notificationManager.notify(0, notification)
         }

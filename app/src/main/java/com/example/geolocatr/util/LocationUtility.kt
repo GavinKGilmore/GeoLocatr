@@ -157,4 +157,24 @@ class LocationUtility(context: Context) {
             }
         }
     }
+
+    fun setStartingLocation(location: Location?) {
+        if (location == null) {
+            // Handle null case (maybe log or keep current location)
+            return
+        }
+
+        // Create a new Location object with the updated coordinates
+        val newLocation = Location(location.provider ?: "").apply {
+            latitude = location.latitude
+            longitude = location.longitude
+            // Copy other relevant fields if needed
+            time = location.time
+            accuracy = location.accuracy
+        }
+
+        // Update the StateFlow with the new Location object
+        mCurrentLocationStateFlow.value = newLocation
+
+    }
 }
