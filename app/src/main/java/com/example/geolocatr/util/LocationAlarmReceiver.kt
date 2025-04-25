@@ -3,6 +3,8 @@ package com.example.geolocatr.util
 import android.Manifest
 import android.app.Activity
 import android.app.AlarmManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -15,6 +17,8 @@ import android.provider.Settings
 import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import java.util.Date
 import java.util.Locale
 
@@ -89,13 +93,35 @@ class LocationAlarmReceiver : BroadcastReceiver() {
             scheduleAlarm(activity)
         }
     }
-    override fun onReceive(context: Context?, intent: Intent) {
+    override fun onReceive(context: Context, intent: Intent) {
         // Part 1.III
         Log.d(LOG_TAG, "received alarm for action ${intent.action}")
         if (intent.action == ALARM_ACTION) {
             val lat = intent.getDoubleExtra(EXTRA_LATITUDE, 0.0)
             val long = intent.getDoubleExtra(EXTRA_LONGITUDE, 0.0)
             Log.d(LOG_TAG, "received our intent with $lat / $long")
+        }
+        if (ActivityCompat
+                .checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+            == PackageManager.PERMISSION_GRANTED) {
+            Log.d(LOG_TAG, "have permission to post notifications")
+            // have permission, TODO post
+            val notificationManager = NotificationManagerCompat.from(context)
+            val channel =
+                NotificationChannel(
+                    "1",
+                    "Near Player",
+                    NotificationManager.IMPORTANCE_DEFAULT
+                ).apply {
+                    description = "You are near another player!"
+                }
+            notificationManager.createNotificationChannel(channel)
+            val notification = NotificationCompat.Builder(context, "1")
+            .setSmallIcon(android.R.drawable.ic_dialog_map)
+                .setContentTitle("You are here!")
+                .setContentText("You are at ${intent.getDoubleExtra(EXTRA_LATITUDE, 0.0)} / ${intent.getDoubleExtra(EXTRA_LONGITUDE, 0.0)}")
+                .build()
+            notificationManager.notify(0, notification)
         }
     }
 

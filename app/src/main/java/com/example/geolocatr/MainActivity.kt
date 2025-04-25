@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.registerForActivityResult
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -28,19 +29,26 @@ import com.google.android.gms.location.LocationSettingsStates
 class MainActivity : ComponentActivity() {
 
     private lateinit var locationUtility: LocationUtility
-    private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
+    private lateinit var locationPermissionLauncher: ActivityResultLauncher<Array<String>>
+    private lateinit var notificationPermissionLauncher: ActivityResultLauncher<String>
     private lateinit var locationLauncher: ActivityResultLauncher<IntentSenderRequest>
     private val locationAlarmReceiver = LocationAlarmReceiver()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         locationUtility = LocationUtility(this)
 
-        permissionLauncher =
+        locationPermissionLauncher =
             registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
                 // Step 5
                 // process if permissions were granted
-                locationUtility.checkPermissionAndGetLocation(this@MainActivity, permissionLauncher)
+                locationUtility.checkPermissionAndGetLocation(this@MainActivity, locationPermissionLauncher)
             }
+
+        notificationPermissionLauncher =
+            registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+                locationAlarmReceiver.checkPermissionAndScheduleAlarm(this@MainActivity, notificationPermissionLauncher)
+            }
+
         locationLauncher = registerForActivityResult(
             ActivityResultContracts.StartIntentSenderForResult()
         ) { result ->
@@ -73,12 +81,15 @@ class MainActivity : ComponentActivity() {
                         location = locationState.value,
                         locationAvailable = true,
                         onGetLocation = {
-                            locationUtility.checkPermissionAndGetLocation(this@MainActivity, permissionLauncher)
+                            locationUtility.checkPermissionAndGetLocation(this@MainActivity, locationPermissionLauncher)
                         },
                         address = addressState.value.toString(),
                         onNotify = { lastLocation ->
                             locationAlarmReceiver.lastLocation = lastLocation
-                            locationAlarmReceiver.scheduleAlarm(this@MainActivity) // TODO: implement everything here
+                            locationAlarmReceiver.checkPermissionAndScheduleAlarm(
+                                activity = this@MainActivity,
+                                permissionLauncher = notificationPermissionLauncher
+                            ) // TODO: implement everything here
                         }
                     )
                 }
