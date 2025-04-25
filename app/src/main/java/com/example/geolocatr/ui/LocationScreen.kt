@@ -17,15 +17,23 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.geolocatr.R
+import com.example.geolocatr.data.DataStoreManager
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 // TODO: Step 2
 
@@ -39,6 +47,32 @@ fun LocationScreen(modifier: Modifier = Modifier,
         position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 0f)
     }
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val dataStoreManager = remember { DataStoreManager(context) }
+
+    // collect:
+    val buildingState = dataStoreManager
+        .buildingFlow
+        .collectAsStateWithLifecycle(
+            initialValue = true,
+            lifecycle = lifecycleOwner.lifecycle
+        )
+
+    val toolbarState = dataStoreManager
+        .toolbarFlow
+        .collectAsStateWithLifecycle(
+            initialValue = true,
+            lifecycle = lifecycleOwner.lifecycle
+        )
+
+    val mapUiSettings = MapUiSettings(
+        zoomControlsEnabled = toolbarState.value
+    )
+
+    val mapProperties = MapProperties(
+        isBuildingEnabled = buildingState.value
+    )
+
     LaunchedEffect(location) {
         if(location != null) {
             // include all points that should be within the bounds of the zoom
@@ -55,6 +89,8 @@ fun LocationScreen(modifier: Modifier = Modifier,
             cameraPositionState.animate(cameraUpdate)
         }
     }
+
+
     Column(modifier = modifier.padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceEvenly) {
@@ -79,9 +115,25 @@ fun LocationScreen(modifier: Modifier = Modifier,
                 Text(stringResource(R.string.get_current_location))
             }
         }
+        UiSettings(
+            modifier = modifier,
+            buildingEnabled = buildingState.value,
+            toolbarEnabled = toolbarState.value,
+            onBuildingChanged = { newValue ->
+                CoroutineScope(Dispatchers.IO).launch {
+                    dataStoreManager.setBuildings(newValue)
+                }
+            },
+            onToolbarChanged = {newValue ->
+                CoroutineScope(Dispatchers.IO).launch {
+                    dataStoreManager.setToolbar(newValue)
+                }}
+        )
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState
+            cameraPositionState = cameraPositionState,
+            uiSettings = mapUiSettings,
+            properties = mapProperties
         ) {
             if(location != null) {
                 val markerState = MarkerState().apply {
@@ -95,9 +147,7 @@ fun LocationScreen(modifier: Modifier = Modifier,
             }
         }
     }
-
 }
-
 
 @Preview(showBackground = true)
 @Composable
